@@ -2,7 +2,7 @@
 
 Name:		geronimo-jta
 Version:	1.1.1
-Release:	7
+Release:	9
 Summary:	J2EE JTA v1.1 API
 
 Group:		Development/Java
