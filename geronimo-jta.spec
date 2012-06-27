@@ -2,7 +2,7 @@
 
 Name:		geronimo-jta
 Version:	1.1.1
-Release:	9
+Release:	10
 Summary:	J2EE JTA v1.1 API
 
 Group:		Development/Java
@@ -11,15 +11,12 @@ URL:		http://geronimo.apache.org/
 # svn export http://svn.apache.org/repos/asf/geronimo/specs/tags/%{spec_name}-%{version}/
 Source0:	%{spec_name}-%{version}.tar.bz
 
-BuildRoot:	%(mktemp -ud %{_tmppath}/%{name}-%{version}-%{release}-XXXXXX)
 BuildArch:	noarch
 
 # This pulls in almost all of the required java and maven stuff
 BuildRequires:	geronimo-parent-poms
-BuildRequires:	maven2-plugin-resources
 
-Requires(post):	jpackage-utils
-Requires(postun): jpackage-utils
+BuildRequires: maven-resources-plugin
 
 # Ensure a smooth transition from geronimo-specs
 Provides:	jta = %{version}-%{release}
@@ -46,59 +43,38 @@ BuildArch:	noarch
 
 
 %build
-export MAVEN_REPO_LOCAL=$(pwd)/.m2/repository
-mkdir -p $MAVEN_REPO_LOCAL
-
-mvn-jpp \
-	-Dmaven.repo.local=$MAVEN_REPO_LOCAL \
-	-Dmaven.test.skip=true \
-	install javadoc:javadoc
-
+mvn-rpmbuild -Dmaven.test.skip=true \
+                install javadoc:javadoc
 
 %install
-rm -rf $RPM_BUILD_ROOT
 
-install -d -m 755 $RPM_BUILD_ROOT%{_javadir}
+install -d -m 755 %{buildroot}%{_javadir}
 
 install -m 644 target/%{spec_name}-%{version}.jar \
-  $RPM_BUILD_ROOT%{_javadir}/%{name}-%{version}.jar
-(cd $RPM_BUILD_ROOT%{_javadir} && for jar in *-%{version}.jar; do ln -sf ${jar} `echo $jar| sed "s|-%{version}||g"`; done)
+	%{buildroot}%{_javadir}/%{name}.jar
 # Also provide compat symlinks
-pushd $RPM_BUILD_ROOT%{_javadir} 
-ln -sf %{name}-%{version}.jar %{spec_name}-%{version}.jar
-ln -sf %{name}-%{version}.jar jta.jar
+pushd $RPM_BUILD_ROOT%{_javadir}
+ln -sf %{name}.jar %{spec_name}.jar
+ln -sf %{name}.jar jta.jar
 popd
 
-install -d -m 755 $RPM_BUILD_ROOT%{_javadocdir}/%{name}-%{version}
-cp -pr target/site/apidocs/* $RPM_BUILD_ROOT%{_javadocdir}/%{name}-%{version}
-(cd $RPM_BUILD_ROOT%{_javadocdir} && ln -sf %{name}-%{version} %{name})
+install -d -m 755 $RPM_BUILD_ROOT%{_javadocdir}/%{name}
+cp -pr target/site/apidocs/* $RPM_BUILD_ROOT%{_javadocdir}/%{name}
 
-install -d -m 755 $RPM_BUILD_ROOT%{_mavenpomdir}
-install -pm 644 pom.xml $RPM_BUILD_ROOT/%{_mavenpomdir}/JPP-%{name}.pom
+install -d -m 755 %{buildroot}%{_mavenpomdir}
+install -pm 644 pom.xml %{buildroot}/%{_mavenpomdir}/JPP-%{name}.pom
 
-%add_to_maven_depmap org.apache.geronimo.specs %{spec_name} %{version} JPP %{name}
-%add_to_maven_depmap javax.transaction jta %{version} JPP %{name}  
-
-%clean
-rm -rf $RPM_BUILD_ROOT
-
-%post
-%update_maven_depmap
-
-%postun
-%update_maven_depmap
-
+%add_maven_depmap JPP-%{name}.pom %{name}.jar -a "javax.transaction:jta"
 
 %files
-%defattr(-,root,root,-)
 %doc LICENSE.txt NOTICE.txt
-%{_javadir}/*.jar
+%{_javadir}/%{name}.jar
+%{_javadir}/%{spec_name}.jar
+%{_javadir}/jta.jar
 %{_mavendepmapfragdir}/%{name}
-%{_mavenpomdir}/*.pom
+%{_mavenpomdir}/JPP-%{name}.pom
 
 %files javadoc
-%defattr(-,root,root,-)
-%{_javadocdir}/%{name}-%{version}
 %{_javadocdir}/%{name}
 
 
