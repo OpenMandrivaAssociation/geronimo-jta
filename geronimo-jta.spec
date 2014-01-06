@@ -1,11 +1,12 @@
+%{?_javapackages_macros:%_javapackages_macros}
 %global spec_name geronimo-jta_1.1_spec
 
 Name:		geronimo-jta
 Version:	1.1.1
-Release:	10
+Release:	15.0%{?dist}
 Summary:	J2EE JTA v1.1 API
 
-Group:		Development/Java
+
 License:	ASL 2.0
 URL:		http://geronimo.apache.org/
 # svn export http://svn.apache.org/repos/asf/geronimo/specs/tags/%{spec_name}-%{version}/
@@ -14,9 +15,9 @@ Source0:	%{spec_name}-%{version}.tar.bz
 BuildArch:	noarch
 
 # This pulls in almost all of the required java and maven stuff
+BuildRequires:  maven-local
 BuildRequires:	geronimo-parent-poms
-
-BuildRequires: maven-resources-plugin
+BuildRequires:	maven-resources-plugin
 
 # Ensure a smooth transition from geronimo-specs
 Provides:	jta = %{version}-%{release}
@@ -31,8 +32,7 @@ applications.
 
 %package javadoc
 Summary:	API documentation for %{name}
-Group:		Development/Java
-Requires:	jpackage-utils >= 0:1.7.5
+
 BuildArch:	noarch
 
 %description javadoc
@@ -43,39 +43,73 @@ BuildArch:	noarch
 
 
 %build
-mvn-rpmbuild -Dmaven.test.skip=true \
-                install javadoc:javadoc
+%mvn_file  : %{name} %{spec_name} jta
+%mvn_alias : javax.transaction:jta
+%mvn_alias : org.eclipse.jetty.orbit:javax.transaction
+%mvn_build -f
 
 %install
+%mvn_install
 
-install -d -m 755 %{buildroot}%{_javadir}
+%pre javadoc
+# workaround for rpm bug, can be removed in F-20
+[ $1 -gt 1 ] && [ -L %{_javadocdir}/%{name} ] && \
+rm -rf $(readlink -f %{_javadocdir}/%{name}) %{_javadocdir}/%{name} || :
 
-install -m 644 target/%{spec_name}-%{version}.jar \
-	%{buildroot}%{_javadir}/%{name}.jar
-# Also provide compat symlinks
-pushd $RPM_BUILD_ROOT%{_javadir}
-ln -sf %{name}.jar %{spec_name}.jar
-ln -sf %{name}.jar jta.jar
-popd
-
-install -d -m 755 $RPM_BUILD_ROOT%{_javadocdir}/%{name}
-cp -pr target/site/apidocs/* $RPM_BUILD_ROOT%{_javadocdir}/%{name}
-
-install -d -m 755 %{buildroot}%{_mavenpomdir}
-install -pm 644 pom.xml %{buildroot}/%{_mavenpomdir}/JPP-%{name}.pom
-
-%add_maven_depmap JPP-%{name}.pom %{name}.jar -a "javax.transaction:jta"
-
-%files
+%files -f .mfiles
 %doc LICENSE.txt NOTICE.txt
-%{_javadir}/%{name}.jar
-%{_javadir}/%{spec_name}.jar
-%{_javadir}/jta.jar
-%{_mavendepmapfragdir}/%{name}
-%{_mavenpomdir}/JPP-%{name}.pom
 
-%files javadoc
-%{_javadocdir}/%{name}
+%files javadoc -f .mfiles-javadoc
+%doc LICENSE.txt NOTICE.txt
 
 
+%changelog
+* Sat Aug 03 2013 Fedora Release Engineering <rel-eng@lists.fedoraproject.org> - 1.1.1-15
+- Rebuilt for https://fedoraproject.org/wiki/Fedora_20_Mass_Rebuild
 
+* Mon Mar  4 2013 Mikolaj Izdebski <mizdebsk@redhat.com> - 1.1.1-14
+- Add depmap for org.eclipse.jetty.orbit
+- Resolves: rhbz#917622
+
+* Wed Feb 13 2013 Fedora Release Engineering <rel-eng@lists.fedoraproject.org> - 1.1.1-13
+- Rebuilt for https://fedoraproject.org/wiki/Fedora_19_Mass_Rebuild
+
+* Wed Feb 06 2013 Java SIG <java-devel@lists.fedoraproject.org> - 1.1.1-12
+- Update for https://fedoraproject.org/wiki/Fedora_19_Maven_Rebuild
+- Replace maven BuildRequires with maven-local
+
+* Thu Jan 17 2013 Michal Srb <msrb@redhat.com> - 1.1.1-11
+- Build with xmvn
+
+* Thu Jul 19 2012 Fedora Release Engineering <rel-eng@lists.fedoraproject.org> - 1.1.1-10
+- Rebuilt for https://fedoraproject.org/wiki/Fedora_18_Mass_Rebuild
+
+* Fri Jan 13 2012 Fedora Release Engineering <rel-eng@lists.fedoraproject.org> - 1.1.1-9
+- Rebuilt for https://fedoraproject.org/wiki/Fedora_17_Mass_Rebuild
+
+* Fri Nov 25 2011 Stanislav Ochotnicky <sochotnicky@redhat.com> - 1.1.1-8
+- Build with Maven 3
+- Fix packaging problems
+
+* Tue Feb 08 2011 Fedora Release Engineering <rel-eng@lists.fedoraproject.org> - 1.1.1-7
+- Rebuilt for https://fedoraproject.org/wiki/Fedora_15_Mass_Rebuild
+
+* Mon Jul 12 2010 Alexander Kurtakov <akurtako@redhat.com> 1.1.1-6
+- Add javax.transaction:jta depmap.
+
+* Fri Apr  2 2010 Mary Ellen Foster <mefoster at gmail.com> 1.1.1-5
+- Add the *correct* version to the geronimo-specs Obsoletes line
+- Also Obsolete geronimo-specs-compat
+
+* Tue Mar 16 2010 Mary Ellen Foster <mefoster at gmail.com> 1.1.1-4
+- Don't require geronimo-parent-poms at runtime
+
+* Wed Feb 10 2010 Mary Ellen Foster <mefoster at gmail.com> 1.1.1-3
+- Add a version to the geronimo-specs Obsoletes line
+
+* Wed Feb 10 2010 Mary Ellen Foster <mefoster at gmail.com> 1.1.1-2
+- Clean up provides list, and obsolete geronimo-specs
+- Change summary and javadoc description
+
+* Wed Feb  3 2010 Mary Ellen Foster <mefoster at gmail.com> 1.1.1-1
+- Initial package
