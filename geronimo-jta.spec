@@ -8,7 +8,7 @@ Summary:	J2EE JTA v1.1 API
 
 
 License:	ASL 2.0
-URL:		http://geronimo.apache.org/
+URL:		https://geronimo.apache.org/
 # svn export http://svn.apache.org/repos/asf/geronimo/specs/tags/%{spec_name}-%{version}/
 Source0:	%{spec_name}-%{version}.tar.bz
 
