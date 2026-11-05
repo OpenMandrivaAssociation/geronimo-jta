@@ -13,6 +13,9 @@ URL:		https://geronimo.apache.org/
 Source0:	%{spec_name}-%{version}.tar.bz
 
 BuildArch:	noarch
+# Literal, so the first rpmbuild -bs records them before sysjar is installed.
+BuildRequires:	maven
+BuildRequires:	java-current-devel
 BuildSystem:	maven
 BuildOption(install):	--file-name %{name} --link %{spec_name} --link jta --alias javax.transaction:jta --alias org.eclipse.jetty.orbit:javax.transaction
 
