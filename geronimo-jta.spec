@@ -5,6 +5,7 @@ Name:		geronimo-jta
 Version:	1.1.1
 Release:	16
 Summary:	J2EE JTA v1.1 API
+Group:		Development/Java
 
 
 License:	ASL 2.0
@@ -21,7 +22,6 @@ BuildOption(install):	--file-name %{name} --link %{spec_name} --link jta --alias
 
 # This pulls in almost all of the required java and maven stuff
 BuildRequires:	geronimo-parent-poms
-BuildRequires:	maven-resources-plugin
 
 # Ensure a smooth transition from geronimo-specs
 Provides:	jta = %{version}-%{release}
